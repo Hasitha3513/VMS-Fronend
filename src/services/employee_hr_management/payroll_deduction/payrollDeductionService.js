@@ -1,0 +1,2 @@
+import { apiFetch } from '../../apiClient';
+export const payrollDeductionService = { list:(t,p)=>apiFetch('/api/v1/hr/payroll-deductions',{token:t,params:p}), getById:(t,id)=>apiFetch(`/api/v1/hr/payroll-deductions/${id}`,{token:t}), create:(t,b)=>apiFetch('/api/v1/hr/payroll-deductions',{method:'POST',token:t,body:b}), update:(t,id,b)=>apiFetch(`/api/v1/hr/payroll-deductions/${id}`,{method:'PUT',token:t,body:b}), delete:(t,id)=>apiFetch(`/api/v1/hr/payroll-deductions/${id}`,{method:'DELETE',token:t}) };

@@ -1,0 +1,26 @@
+import SummarizeRoundedIcon from '@mui/icons-material/SummarizeRounded';
+import { useEffect, useMemo, useState } from 'react';
+import { useTheme } from '@mui/material/styles';
+import CrudEntityPage from '../../organization/shared/CrudEntityPage';
+import { useAuth } from '../../../app/AuthContext';
+import { organizationService } from '../../../services/organizationService';
+import { vehicleService } from '../../../services/vehicle_management/vehicle/vehicleService';
+import { vehicleDailySummaryService } from '../../../services/vehicle_management/vehicle_daily_summary/vehicleDailySummaryService';
+import { getOwnCompanyPrefill, opt, req, rowsFrom, toDecimal, toInt } from '../../employee_hr_management/shared/hrCrudCommon';
+
+export default function VehicleDailySummaryPage(){
+  const theme=useTheme(); const {token,auth}=useAuth(); const [companies,setCompanies]=useState([]); const [vehicles,setVehicles]=useState([]);
+  useEffect(()=>{(async()=>{ if(!token) return; try{ const [cr,vr]=await Promise.all([organizationService.listCompanies(token,{activeOnly:true}), vehicleService.list(token,{})]); setCompanies(rowsFrom(cr).map(c=>({id:c.companyId,code:c.companyCode,name:c.companyName}))); setVehicles(rowsFrom(vr)); }catch{ setCompanies([]); setVehicles([]);} })(); },[token]);
+  const own=useMemo(()=>getOwnCompanyPrefill(auth,companies),[auth,companies]); const companyById=useMemo(()=>Object.fromEntries(companies.map(c=>[String(c.id),c])),[companies]);
+  const vehicleLabelById=useMemo(()=>Object.fromEntries(vehicles.map(v=>[String(v.vehicleId),`${v.vehicleCode||'-'} | ${v.registrationNumber||'-'}`])),[vehicles]);
+  const vehicleOptsByCompany=useMemo(()=>{ const m={}; vehicles.forEach(v=>{ const k=String(v.companyId||''); (m[k]??=[]).push({value:String(v.vehicleId),label:vehicleLabelById[String(v.vehicleId)]});}); return m;},[vehicles,vehicleLabelById]);
+  const companyOpts=useMemo(()=>[{value:'',label:'All Companies'},...companies.map(c=>({value:String(c.id),label:`${c.name} (${c.code})`}))],[companies]); const companyFormOpts=useMemo(()=>[{value:'',label:'Select Company'},...companies.map(c=>({value:String(c.id),label:`${c.name} (${c.code})`}))],[companies]);
+  return <CrudEntityPage title="Vehicle Daily Summaries" icon={<SummarizeRoundedIcon sx={{color:'#fff',fontSize:20}}/>} gradient={`linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`} idKey="summaryId" prefillForm={own} prefillFilters={own?{companyId:own.companyId}:null}
+    columns={[{key:'companyId',label:'Company',render:r=>companyById[String(r.companyId)]?.name||r.companyCode||'-'},{key:'vehicleId',label:'Vehicle',render:r=>vehicleLabelById[String(r.vehicleId)]||'-'},{key:'summaryDate',label:'Date'},{key:'totalDistance',label:'Total Distance'},{key:'totalFuelConsumed',label:'Fuel'},{key:'avgFuelEfficiency',label:'Avg Fuel Eff'}]}
+    filterFields={[{key:'companyId',label:'Company',type:'autocomplete',options:companyOpts},{key:'vehicleId',label:'Vehicle',type:'autocomplete',optionsByForm:f=>[{value:'',label:'All Vehicles'},...(vehicleOptsByCompany[String(f?.companyId||'')]||[])]},{key:'summaryDate',label:'Date',type:'date'}]}
+    formFields={[{key:'companyId',label:'Company',type:'autocomplete',options:companyFormOpts,readonlyOnEdit:true},{key:'companyCode',label:'Company Code',readOnly:true},{key:'vehicleId',label:'Vehicle',type:'autocomplete',optionsByForm:f=>[{value:'',label:'Select Vehicle'},...(vehicleOptsByCompany[String(f?.companyId||'')]||[])]},{key:'summaryDate',label:'Summary Date',type:'date'},{key:'totalDistance',label:'Total Distance',type:'number'},{key:'totalEngineHours',label:'Total Engine Hours',type:'number'},{key:'totalFuelConsumed',label:'Total Fuel Consumed',type:'number'},{key:'avgFuelEfficiency',label:'Avg Fuel Efficiency',type:'number'},{key:'totalTrips',label:'Total Trips',type:'number'},{key:'operationalHours',label:'Operational Hours',type:'number'},{key:'idleHours',label:'Idle Hours',type:'number'},{key:'maintenanceHours',label:'Maintenance Hours',type:'number'}]}
+    defaultFilters={{companyId:'',vehicleId:'',summaryDate:'',sortBy:'summaryDate',sortDir:'desc'}} emptyForm={{companyId:'',companyCode:'',vehicleId:'',summaryDate:'',totalDistance:'',totalEngineHours:'',totalFuelConsumed:'',avgFuelEfficiency:'',totalTrips:'',operationalHours:'',idleHours:'',maintenanceHours:''}}
+    normalizePayload={f=>({companyId:opt(f.companyId),companyCode:req(f.companyCode),vehicleId:opt(f.vehicleId),summaryDate:opt(f.summaryDate),totalDistance:toDecimal(f.totalDistance),totalEngineHours:toDecimal(f.totalEngineHours),totalFuelConsumed:toDecimal(f.totalFuelConsumed),avgFuelEfficiency:toDecimal(f.avgFuelEfficiency),totalTrips:toInt(f.totalTrips),operationalHours:toDecimal(f.operationalHours),idleHours:toDecimal(f.idleHours),maintenanceHours:toDecimal(f.maintenanceHours)})}
+    onFormFieldChange={(n,k,v)=>k==='companyId'?{...n,companyCode:companyById[String(v)]?.code||'',vehicleId:''}:n}
+    listFetcher={vehicleDailySummaryService.list} getByIdFetcher={vehicleDailySummaryService.getById} createFetcher={vehicleDailySummaryService.create} updateFetcher={vehicleDailySummaryService.update} deleteFetcher={vehicleDailySummaryService.delete} autoSearch autoSearchDebounceMs={350} fitViewport viewportOffset={190} />;
+}

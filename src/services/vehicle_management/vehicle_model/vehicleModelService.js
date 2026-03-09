@@ -1,0 +1,2 @@
+import { apiFetch } from '../../apiClient';
+export const vehicleModelService = { list:(t,p)=>apiFetch('/api/v1/vehicles/models',{token:t,params:p}), getById:(t,id)=>apiFetch(`/api/v1/vehicles/models/${id}`,{token:t}), create:(t,b)=>apiFetch('/api/v1/vehicles/models',{method:'POST',token:t,body:b}), update:(t,id,b)=>apiFetch(`/api/v1/vehicles/models/${id}`,{method:'PUT',token:t,body:b}), delete:(t,id)=>apiFetch(`/api/v1/vehicles/models/${id}`,{method:'DELETE',token:t}) };

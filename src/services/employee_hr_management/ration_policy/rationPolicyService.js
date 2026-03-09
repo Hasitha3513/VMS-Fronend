@@ -1,0 +1,2 @@
+import { apiFetch } from '../../apiClient';
+export const rationPolicyService = { list:(t,p)=>apiFetch('/api/v1/hr/ration-policies',{token:t,params:p}), getById:(t,id)=>apiFetch(`/api/v1/hr/ration-policies/${id}`,{token:t}), create:(t,b)=>apiFetch('/api/v1/hr/ration-policies',{method:'POST',token:t,body:b}), update:(t,id,b)=>apiFetch(`/api/v1/hr/ration-policies/${id}`,{method:'PUT',token:t,body:b}), delete:(t,id)=>apiFetch(`/api/v1/hr/ration-policies/${id}`,{method:'DELETE',token:t}) };
